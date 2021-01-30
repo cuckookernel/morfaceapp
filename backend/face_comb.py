@@ -8,9 +8,9 @@ from PIL import Image
 import PIL.Image
 import numpy as np
 
-import fld
-from fld import TRIANGLES
-from util import BBox
+import backend.fld as fld
+from backend.fld import TRIANGLES
+from face_landmark_experiments.util import BBox
 
 Array = np.ndarray
 
@@ -79,7 +79,7 @@ def gen_transition( pimg1: ProcessedImage, pimg2: ProcessedImage, out_path: Path
         img.save( out_path / f"c_{int(lambdah * 100) :02d}.png")
 
 
-def combine(pimg1: ProcessedImage, pimg2: ProcessedImage, lambdah: float):
+def combine(pimg1: ProcessedImage, pimg2: ProcessedImage, lambdah: float) -> PIL.Image:
     lm_p1 = pimg1.bbox.projectLandmark(pimg1.landmarks)
     lm_p2 = pimg2.bbox.projectLandmark(pimg2.landmarks)
 

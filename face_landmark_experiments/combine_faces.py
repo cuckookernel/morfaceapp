@@ -4,12 +4,12 @@ import sys
 from pathlib import Path
 
 import PIL.Image
-#import face_landmark_experiments.fld as fld
-#import face_landmark_experiments.face_comb as fcomb
-import fld
-import face_comb as fcomb
+# import face_landmark_experiments.fld as fld
+# import face_landmark_experiments.face_comb as fcomb
+from backend import fld
+import backend.face_comb as fcomb
 
-model = fld.load_model()
+model = fld.load_landmarks_model()
 retinaface = fld.Retinaface.Retinaface()
 
 

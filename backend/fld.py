@@ -1,32 +1,29 @@
 """Helper functions to support face landmark detection using
 python_facelandmark_detection project"""
-from typing import List, Tuple
-import sys
+from typing import List, Tuple, Dict
 import time
 from pathlib import Path
 
-import PIL
 import numpy as np
 import torch
 import torch.nn as nn
 import cv2
 
+# from .retinaface.core import Retinaface
+from .flm_models.basenet import MobileNet_GDConv
+from .utils import BBox, drawLandmark_multiple
+
+
 PICS_PATH = Path( '/home/teo/Dokumente/Personales/Photos' )
 FLD_PATH = Path( '/home/teo/git/pytorch_face_landmark' )
 
-sys.path.append( str( FLD_PATH ) )
-
-from models.basenet import MobileNet_GDConv
-from Retinaface import Retinaface
-from common.utils import BBox, drawLandmark_multiple
-
 Array = np.ndarray
 
-OUT_SIZE = 224 # for mobile net
+OUT_SIZE = 224  # for mobile net
 MEAN = np.asarray([ 0.485, 0.456, 0.406 ])
 STD = np.asarray([ 0.229, 0.224, 0.225 ])
 
-Retinaface.trained_model = str( FLD_PATH / 'Retinaface/weights/mobilenet0.25_Final.pth' )
+# Retinaface.trained_model = str( FLD_PATH / 'Retinaface/weights/mobilenet0.25_Final.pth' )
 
 # download model from
 # https://drive.google.com/file/d/1Le5UdpMkKOTRr1sTp4lwkw8263sbgdSe/view?usp=sharing
@@ -35,7 +32,7 @@ MOBILE_NET_MODEL_FP = FLD_PATH / 'checkpoint/mobilenet_224_model_best_gdconv_ext
 # %%
 
 
-def load_model():
+def load_landmarks_model():
     model = MobileNet_GDConv(136)
     model = torch.nn.DataParallel(model)
 
@@ -51,6 +48,7 @@ def load_model():
     model.eval()
     return model
 
+
 def process_faces(faces: List[Array], img: np.ndarray, model: nn.Module) -> np.ndarray:
     """detect all faces in an image and their landmarks and draw bounding boxes and points"""
     for k, face in enumerate(faces):
@@ -60,8 +58,9 @@ def process_faces(faces: List[Array], img: np.ndarray, model: nn.Module) -> np.n
     return img
 
 
-def process_1_face(face: Array, img: np.ndarray, model: nn.Module ):
-    new_bbox, bbox_dict = build_bbox(face, img.shape)
+def process_1_face(face_bbox: Array, img: np.ndarray, model: nn.Module ) -> Tuple[Array, BBox]:
+    """Detect facelandmarks on a face from an image"""
+    new_bbox, bbox_dict = build_bbox(face_bbox, img.shape)
 
     dx, dy, edx, edy = bbox_dict['dx'], bbox_dict['dy'], bbox_dict['edx'], bbox_dict['edy']
 
@@ -97,7 +96,7 @@ def process_1_face(face: Array, img: np.ndarray, model: nn.Module ):
     return landmark, new_bbox
 
 
-def build_bbox(face: Array, img_shape: Tuple[int, int]) -> BBox:
+def build_bbox(face: Array, img_shape: Tuple[int, int]) -> Tuple[BBox, Dict]:
     x1 = face[0]
     y1 = face[1]
     x2 = face[2]
@@ -117,7 +116,7 @@ def build_bbox(face: Array, img_shape: Tuple[int, int]) -> BBox:
     x1 = max(0, x1)
     y1 = max(0, y1)
 
-    print( f'build_bbox: img_shape={img_shape}')
+    # print( f'build_bbox: img_shape={img_shape}')
     height, width, _ = img_shape
     edx = max(0, x2 - width)
     edy = max(0, y2 - height)
