@@ -2,6 +2,9 @@
 
 from pathlib import Path
 import json
+import time
+import datetime as dt
+import logging
 
 import ray
 from ray import serve
@@ -15,13 +18,17 @@ import backend.image_uploader as iul
 import backend.face_detector as fd
 import backend.landmarks_detector as lmd
 import backend.face_combiner as fc
+
+
+log = logging.getLogger()
+log.setLevel(logging.INFO)
 # %%
 
 
 def _set_up_endpoints():
     # %%
-    ray.init( num_cpus=3 )
-    client = serve.start()
+    ray.init( num_cpus=6 )
+    client = serve.start( http_host="0.0.0.0" )
     # %%
     # middleware = Middleware( CORSMiddleware, allow_origins=["*"], allow_methods=["*"] )
     # client = serve.start( http_middlewares=[ middleware ]  )
@@ -44,30 +51,43 @@ def _set_up_endpoints():
     # %%
     # Form a backend from our class and connect it to an endpoint.
     client.create_backend("face_detector", fd.FaceDetector)
-    client.create_backend("image_uploader", iul.upload_image )
-    # %%
-    # client.create_backend("landmark_detector", lmd.LandMarksDetector )
-    # client.create_backend("face_combiner", fc.combine_faces )
-    # %%
-    client.create_endpoint("detect_faces", backend="face_detector",
-                           route="/detect_faces")
+    client.create_backend("image_uploader", iul.upload_image)
 
-    client.create_endpoint("upload_image", backend="image_uploader",
-                           route="/upload_image", methods=["POST"])
+    client.create_backend( "landmark_detector", lmd.LandMarksDetector )
+    client.create_backend( "face_combiner", fc.combine_faces )
+    client.create_backend( "image_downloader", iul.download_image )
     # %%
-    # client.create_endpoint("detect_landmarks", backend="landmark_detector",
-    #                        route="/detect_landmarks", methods=["GET"])
+    client.create_endpoint( "upload_image", backend="image_uploader",
+                            route="/upload_image", methods=["POST"] )
 
-    # client.create_endpoint("combine_faces", backend="face_combiner",
-    #                        route="/combine_faces", methods=["GET"])
+    client.create_endpoint( "detect_faces", backend="face_detector",
+                            route="/detect_faces" )
+
+    client.create_endpoint( "detect_landmarks", backend="landmark_detector",
+                            route="/detect_landmarks", methods=["GET"] )
+
+    client.create_endpoint("combine_faces", backend="face_combiner",
+                           route="/combine_faces", methods=["POST"])
+
+    client.create_endpoint("download_image", backend="image_downloader",
+                           route="/download_image", methods=["GET"])
+
     # %%
+    while True:
+        print( f"Keep alive loop: {dt.datetime.utcnow()}" )
+        log.info( f"Keep alive loop: {dt.datetime.utcnow()}" )
+        time.sleep( 600 )
 
 
-def _interactive_testing( client ):
+def _interactive_testing( ):
     # %%
     # Query our endpoint in two different ways: from HTTP and from Python.
-    host = "http://127.0.0.1:8000"
     # %%
+    ray.init(address="127.0.0.1:8000")
+    client = serve.connect( )
+    # %%
+    host = "http://127.0.0.1:8000"
+
     fpath = Path("/home/teo/Dokumente/personal/Photos/teo-2019-01-01.png")
     with open( fpath, "rb" ) as f_in:
         data = f_in.read()
@@ -94,3 +114,7 @@ def _interactive_testing( client ):
     # > {"count": 1}
     print(ray.get(client.get_handle("my_endpoint").remote()))
     # > {"count": 2}
+
+
+if __name__ == "__main__":
+    _set_up_endpoints()

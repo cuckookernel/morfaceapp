@@ -1,16 +1,19 @@
+"""logic behind combine faces endpoint"""
 
 from typing import Dict
-import json
-from .common import Request, get_image, Array, put_img
-from .face_comb import ProcessedImage, combine
 
-import PIL.Image
+import numpy as np
+from backend.common import Request, get_image, put_img
+from backend.face_comb import ProcessedImage, combine
+from face_landmark_experiments.util import BBox
+
+# %%
 
 
 def combine_faces( request: Request ) -> Dict:
     """backend for combining faces request json data should contain
     img1_key, img2_key, face_bbox1, face_bbox2, landmarks1, landmarks2"""
-    req_json = json.loads( request.get_data() )
+    req_json = request.get_json()
     pimg1 = _make_processed_img( req_json, 1 )
     pimg2 = _make_processed_img( req_json, 2 )
     lambd = req_json['lambd']
@@ -25,7 +28,8 @@ def _make_processed_img( req_json: Dict, idx: int ) -> ProcessedImage:
 
     img_key = req_json[f'img{idx}_key']
     img = get_image( img_key )
-    bbox = json.loads(req_json[f'face_bbox{idx}'])
-    landmarks = Array(req_json[f'landmarks{idx}'])
+    bbox_dict = req_json[f'face_bbox{idx}']
+    bbox = BBox( [bbox_dict['left'], bbox_dict['right'], bbox_dict['top'], bbox_dict['bottom']] )
+    landmarks = np.array(req_json[f'landmarks{idx}'])
 
     return ProcessedImage(img=img, bbox=bbox, landmarks=landmarks)
