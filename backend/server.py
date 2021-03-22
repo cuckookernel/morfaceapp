@@ -27,7 +27,7 @@ log.setLevel(logging.INFO)
 
 def _set_up_endpoints():
     # %%
-    ray.init( num_cpus=6 )
+    ray.init( num_cpus=7 )
     client = serve.start( http_host="0.0.0.0" )
     # %%
     # middleware = Middleware( CORSMiddleware, allow_origins=["*"], allow_methods=["*"] )

@@ -15,8 +15,8 @@ class LandMarksDetector:
         self.count = 0
 
     def __call__(self, request: Request ):
-        img_key = request.args['img_key']
-        face_idx = int(request.args['face_idx'])
+        img_key = request.query_params['img_key']
+        face_idx = int(request.query_params['face_idx'])
 
         image = get_image(img_key)
         face_bbox = self.retinaface( image )[ face_idx ]

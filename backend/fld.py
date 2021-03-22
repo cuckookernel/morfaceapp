@@ -15,7 +15,7 @@ from .utils import BBox, drawLandmark_multiple
 
 
 PICS_PATH = Path( '/home/teo/Dokumente/Personales/Photos' )
-FLD_PATH = Path( '/home/teo/git/pytorch_face_landmark' )
+FLD_PATH = Path( '/home/teo/git/other_peoples/pytorch_face_landmark' )
 
 Array = np.ndarray
 

@@ -4,7 +4,8 @@ import logging
 from pathlib import Path
 from hashlib import sha256
 
-from flask.wrappers import Request
+from starlette.requests import Request
+from starlette.responses import FileResponse
 
 import numpy as np
 import PIL.Image

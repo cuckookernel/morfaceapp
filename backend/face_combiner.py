@@ -10,10 +10,10 @@ from face_landmark_experiments.util import BBox
 # %%
 
 
-def combine_faces( request: Request ) -> Dict:
+async def combine_faces( request: Request ) -> Dict:
     """backend for combining faces request json data should contain
     img1_key, img2_key, face_bbox1, face_bbox2, landmarks1, landmarks2"""
-    req_json = request.get_json()
+    req_json = await request.json()
     pimg1 = _make_processed_img( req_json, 1 )
     pimg2 = _make_processed_img( req_json, 2 )
     lambd = req_json['lambd']

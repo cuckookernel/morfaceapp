@@ -15,7 +15,7 @@ class FaceDetector:
         self.count = 0
 
     def __call__(self, request: Request ):
-        img_key = request.args['img_key']
+        img_key = request.query_params['img_key']
         img = get_image( img_key )
 
         face_bboxes0 = self.retinaface( img )

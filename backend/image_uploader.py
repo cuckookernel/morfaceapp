@@ -2,8 +2,7 @@
 
 from hashlib import sha256
 
-from flask import Response
-from .common import Request, TMP_IMAGES_PATH
+from .common import Request, TMP_IMAGES_PATH, FileResponse
 
 
 async def upload_image( request: Request ):
@@ -14,7 +13,7 @@ async def upload_image( request: Request ):
         raise RuntimeError(f"data is too big: {content_length} bytes")
 
     # image_bytes = await request.body()
-    image_bytes = request.get_data()
+    image_bytes = await request.body()
     print( f"upload_image: body length= {len(image_bytes)}" )
 
     sha = sha256(image_bytes).hexdigest()
@@ -30,17 +29,12 @@ async def upload_image( request: Request ):
     return { "img_key": img_key }
 
 
-async def download_image( request: Request ):
+async def download_image( request: Request ) -> FileResponse:
     """upload image via post request"""
 
     # image_bytes = await request.body()
-    img_key = request.args['img_key']
-
+    img_key = request.query_params['img_key']
     print( f"download_image: {img_key}" )
 
     fpath = TMP_IMAGES_PATH / img_key
-
-    with fpath.open("rb") as f_out:
-        img_bytes = f_out.read()
-
-    return Response(img_bytes)
+    return FileResponse(fpath, media_type='image/png', filename=fpath.name)
