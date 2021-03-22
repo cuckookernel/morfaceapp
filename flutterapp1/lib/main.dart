@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import './picture_selector.dart';
 
 
-// const SERVER_HOST_PORT = "http://127.0.0.1:8000";
+// const SERVER_HOST_PORT = "http://127.0.0.1:5000";
 const SERVER_HOST_PORT = "http://192.168.1.5:8000";
 
 void main() {
@@ -69,64 +69,64 @@ class MyHomePage extends StatelessWidget {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return Scaffold(
-        appBar: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Text("Home"),
-        ),
-        body: Consumer<AppStateModel>(
-            builder: (context, appStateModel, child) {
-              return Center(
-                  child: // Expanded( child:
-                  Column(
-                    //
-                    // Invoke "debug painting" (press "p" in the console, choose the
-                    // "Toggle Debug Paint" action from the Flutter Inspector in Android
-                    // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-                    // to see the wireframe for each widget.
-                    //
-                    // Column has various properties to control how it sizes itself and
-                    // how it positions its children. Here we use mainAxisAlignment to
-                    // center the children vertically; the main axis here is the vertical
-                    // axis because Columns are vertical (the cross axis would be
-                    // horizontal).
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.max,
-                    children: <Widget>[
-                      PictureSelectorCard2("A"),
-                      PictureSelectorCard2("B")
-                    ],
-                  )
-                //),
-              );
-            }
-        ),
-        bottomNavigationBar: Container(child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              //Column(
-              //   children: [
-              IconButton(
-                  icon: Icon(Icons.people_alt),
-                  iconSize: 50,
-                  onPressed: null
-              ),
-              //Text( "Morph" )
-              // ] ),
-              //),
-              // Column(
-              //  children: [
-              Consumer<AppStateModel>(
-                  builder: (context, appStateModel, child) => IconButton(
-                      icon: Icon(Icons.local_movies),
-                      iconSize: 50,
-                      onPressed: appStateModel.getFaceCombinationResult
-                  )
-              ),
-              //   Text( "Animate")
-              // ] )
-            ]))
+    return Consumer<AppStateModel>( builder:
+        (context, appStateModel, child) {
+      return Scaffold(
+          appBar: AppBar(
+            // Here we take the value from the MyHomePage object that was created by
+            // the App.build method, and use it to set our appbar title.
+            title: Text("Home"),
+          ),
+          body: Center(
+              child: // Expanded( child:
+              Column(
+                //
+                // Invoke "debug painting" (press "p" in the console, choose the
+                // "Toggle Debug Paint" action from the Flutter Inspector in Android
+                // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+                // to see the wireframe for each widget.
+                //
+                // Column has various properties to control how it sizes itself and
+                // how it positions its children. Here we use mainAxisAlignment to
+                // center the children vertically; the main axis here is the vertical
+                // axis because Columns are vertical (the cross axis would be
+                // horizontal).
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  PictureSelectorCard2("A"),
+                  PictureSelectorCard2("B")
+                ],
+              )
+            //),
+          ),
+          //),
+          bottomNavigationBar:  Container(
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                        icon: Icon(Icons.people_alt),
+                        iconSize: 50,
+                        onPressed: null
+                    ),
+                    IconButton(
+                        icon: Icon(Icons.local_movies),
+                        iconSize: 50,
+                        // onPressed: appStateModel.getFaceCombinationResult
+                        onPressed: () {
+                          appStateModel.getFaceCombinationResult();
+                          
+                          Navigator.push(context,
+                              MaterialPageRoute(
+                                  builder: (context) => CombImagePage()
+                              )
+                          );
+                        })
+                  ]
+              ))
+      );
+    }
     );
   }
 }
@@ -134,60 +134,82 @@ class MyHomePage extends StatelessWidget {
 class AppStateModel extends ChangeNotifier {
   ImageState imageStateA = ImageState();
   ImageState imageStateB = ImageState();
+  Image combImage;
+  double _combinationProgress = 0.0;
+  get combinationProgress => _combinationProgress;
 
   void setImageFileA(io.File imageFile) {
+    log("setImageFileA called $imageFile");
     if(imageFile != imageStateA.file) {
       imageStateA.reset();
       imageStateA.file = imageFile;
-      notifyListeners();
+      // notifyListeners();
     }
   }
 
   void setImageFileB(io.File imageFile) {
+    log("setImageFileB called $imageFile");
     if(imageFile != imageStateB.file) {
       imageStateB.reset();
       imageStateB.file = imageFile;
-      notifyListeners();
+      // notifyListeners();
     }
   }
 
   void getFaceCombinationResult() async {
+    _combinationProgress = 0;
+    // notifyListeners();
     if( imageStateA.key == null ) {
       imageStateA.key = await uploadImageAsync(imageStateA.file);
+      log("A.key: ${imageStateA.key}");
     }
     if( imageStateB.key == null ) {
       imageStateB.key = await uploadImageAsync(imageStateB.file);
+      log("B.key: ${imageStateB.key}");
     }
+    _combinationProgress = 0.1;
+    // notifyListeners();
 
     if( imageStateA.faceIdx == null ){
-      final numFacesA = await detectFacesAsync(imageStateA.key);
+      log("Before calling detectFaces A: ${imageStateA.key}");
+
+      //final numFacesA =
+      await detectFacesAsync(imageStateA.key);
       imageStateA.faceIdx = 0;
     }
     if( imageStateB.faceIdx == null  ) {
-      final numFacesB = await detectFacesAsync(imageStateB.key);
+      log("Before calling detectFaces B: ${imageStateB.key}");
+
+      // final numFacesB =
+      await detectFacesAsync(imageStateB.key);
       imageStateB.faceIdx = 0;
     }
-    // TODO: check that numFaces is not 0.
-    //  If 0 should tell user no faces detected on image and stop
+
+    _combinationProgress = 0.2;
+    // notifyListeners();
+    // TODO: check that numFaces for each of the two images is not 0.
+    // If numFaces == 0, should tell user no faces detected on image and stop
     // If numFaces > 1  need to ask user which face to use
 
     imageStateA.landmarks = await imageStateA.detectLandmarksAsync();
     imageStateB.landmarks = await imageStateB.detectLandmarksAsync();
 
-    final key = await combineFacesAsync(0.5);
+    combImage = await combineFacesAsync(0.5);
+    _combinationProgress = 0.8;
+    // notifyListeners();
   }
 
 
-  Future<int> detectFacesAsync(ImageKey imgKey) async {
+  Future<int> detectFacesAsync(String imgKey) async {
     log("calling detectFacesEndpoint $imgKey");
 
-    final response = await http.get( SERVER_HOST_PORT + '/detect_faces?img_key=${imgKey.key}' );
+    final response = await http.get( SERVER_HOST_PORT + '/detect_faces?img_key=$imgKey' );
 
     if (response.statusCode == 200) {
       final jsonObj =cv.jsonDecode(response.body);
       final len = jsonObj['face_bboxes'].length;
 
-      log("face bboxes returned: ${len}");
+      log("face bboxes returned: $len");
       return len;
 
     } else {
@@ -195,37 +217,38 @@ class AppStateModel extends ChangeNotifier {
     }
   }
 
-  Future<int> combineFacesAsync(double lambda ) async {
+  Future<Image> combineFacesAsync(double lambda ) async {
     log("calling /combine_faces ${imageStateA.key} ${imageStateB.key}");
 
     final dataObj = {
-      "img1_key": imageStateA.key.key,
+      "img1_key": imageStateA.key,
       "landmarks1": imageStateA.landmarks.points,
       "face_bbox1": imageStateA.landmarks.bbox,
-      "img2_key": imageStateB.key.key,
+      "img2_key": imageStateB.key,
       "landmarks2": imageStateB.landmarks.points,
       "face_bbox2": imageStateB.landmarks.bbox,
       "lambd":  lambda,
     };
 
-    final json_text = cv.jsonEncode( dataObj );
+    final jsonText = cv.jsonEncode( dataObj );
 
-    log("json_text has length ${json_text.length}");
+    log("combineFacesAsync: request json_text has length ${jsonText.length}");
 
-    final response = await http.post(
+    final response1 = await http.post(
         SERVER_HOST_PORT + '/combine_faces',
         headers: { "Content-Type": 'application/json' },
-        body: json_text
+        body: jsonText
     );
 
-    if (response.statusCode == 200) {
-      final jsonObj  = cv.jsonDecode(response.body) as Map<String, dynamic>;
-      final result_key = jsonObj['img_key'];
+    if (response1.statusCode == 200) {
+      final jsonObj  = cv.jsonDecode(response1.body) as Map<String, dynamic>;
+      final resultKey = jsonObj['img_key'];
 
-      final response2 = await http.get( SERVER_HOST_PORT + '/download_image?img_key=${result_key}');
-      final bytes = response2.bodyBytes;
-      log("response2: $response2 result_key=$result_key  ${bytes.length} bytes");
-      return 1;
+      final url = SERVER_HOST_PORT + '/download_image?img_key=$resultKey';
+      // final response2 = await http.get( SERVER_HOST_PORT + '/download_image?img_key=$resultKey');
+      // final bytes = response2.bodyBytes;
+      // log("combineFacesAsync: response2: $response2 result_key=$resultKey  ${bytes.length} bytes");
+      return Image.network(url);
     } else {
       throw Exception('call to /combine_faces failed');
     }
@@ -236,7 +259,7 @@ class AppStateModel extends ChangeNotifier {
 
 class ImageState {
   io.File file;
-  ImageKey key;
+  String key;
   int faceIdx;
   Landmarks landmarks;
 
@@ -252,24 +275,7 @@ class ImageState {
   }
 }
 
-class ImageKey {
-  String key;
-
-  ImageKey(this.key);
-
-  factory ImageKey.fromJson(Map<String, dynamic> obj) {
-    final key = obj['img_key'].toString();
-    log("fromJson: $obj key: $key");
-
-    return ImageKey(key);
-  }
-
-  String toString() {
-    return "ImgKey(${this.key})";
-  }
-}
-
-Future<ImageKey> uploadImageAsync(io.File imgFile) async {
+Future<String> uploadImageAsync(io.File imgFile) async {
   log("uploading image $imgFile");
 
   final data = await imgFile.readAsBytes();
@@ -287,7 +293,7 @@ Future<ImageKey> uploadImageAsync(io.File imgFile) async {
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
     // then parse the JSON.
-    final imgKey = ImageKey.fromJson(cv.jsonDecode(response.body));
+    final imgKey = cv.jsonDecode(response.body)['img_key'];
     log('image key returned by server: $imgKey');
     return imgKey;
   } else {
@@ -298,11 +304,11 @@ Future<ImageKey> uploadImageAsync(io.File imgFile) async {
 }
 
 
-Future<Landmarks> _detectLandmarksAsync(ImageKey imgKey, int faceIndex) async {
+Future<Landmarks> _detectLandmarksAsync(String imgKey, int faceIndex) async {
   log("calling /detect_landmarks $imgKey $faceIndex");
 
   final response = await http.get( SERVER_HOST_PORT + '/detect_landmarks'
-      '?img_key=${imgKey.key}&face_idx=$faceIndex' );
+      '?img_key=$imgKey&face_idx=$faceIndex' );
 
   if (response.statusCode == 200) {
     final jsonObj = cv.jsonDecode(response.body) as Map<String, dynamic>;
@@ -316,7 +322,6 @@ Future<Landmarks> _detectLandmarksAsync(ImageKey imgKey, int faceIndex) async {
   }
 }
 
-
 class Landmarks {
   List<dynamic> points;
   Map<String, dynamic> bbox;
@@ -325,10 +330,31 @@ class Landmarks {
 }
 
 
-class CombResult {
 
+class CombImagePage extends StatelessWidget {
+  CombImagePage() : super();
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text("Combined Faces"),
+        ),
+        body: Center(
+            child:
+            Consumer<AppStateModel>( builder:
+              (context, appStateModel, _ ) => Center(
+                child: SizedBox(
+                width: 100,
+                height: 100,
+                child: LinearProgressIndicator(
+                  minHeight: 20,
+                  value: appStateModel.combinationProgress,
+                ),
+              ),
+              )
+            )
+        )
+    );
+  }
 }
-
-
-
