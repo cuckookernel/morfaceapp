@@ -1,14 +1,15 @@
 """detect faces in a picture"""
-import PIL.Image
 import numpy as numpy
 from backend.retinaface.core import Retinaface
 
-from .common import Request, TMP_IMAGES_PATH, l_info, get_image
+from .common import Request, get_image
+
 # %%
 
 
 class FaceDetector:
     """detect all faces in an image"""
+
     def __init__(self):
         print( "FaceDetector building retinaface model" )
         self.retinaface = Retinaface()

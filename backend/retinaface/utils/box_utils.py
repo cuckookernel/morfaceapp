@@ -1,13 +1,17 @@
-import torch
 import numpy as np
+import torch
 
 
 def point_form(boxes):
-    """ Convert prior_boxes to (xmin, ymin, xmax, ymax)
+    """Convert prior_boxes to (xmin, ymin, xmax, ymax)
     representation for comparison to point form ground truth data.
+
     Args:
+    ----
         boxes: (tensor) center-size default boxes from priorbox layers.
+
     Return:
+    ------
         boxes: (tensor) Converted xmin, ymin, xmax, ymax form of boxes.
     """
     return torch.cat((boxes[:, :2] - boxes[:, 2:]/2,     # xmin, ymin
@@ -15,9 +19,11 @@ def point_form(boxes):
 
 
 def center_size(boxes):
-    """ Convert prior_boxes to (cx, cy, w, h)
+    """Convert prior_boxes to (cx, cy, w, h)
     representation for comparison to center-size form ground truth data.
+
     Args:
+    ----
         boxes: (tensor) point_form boxes
     Return:
         boxes: (tensor) Converted xmin, ymin, xmax, ymax form of boxes.
@@ -27,14 +33,18 @@ def center_size(boxes):
 
 
 def intersect(box_a, box_b):
-    """ We resize both tensors to [A,B,2] without new malloc:
+    """We resize both tensors to [A,B,2] without new malloc:
     [A,2] -> [A,1,2] -> [A,B,2]
     [B,2] -> [1,B,2] -> [A,B,2]
     Then we compute the area of intersect between box_a and box_b.
+
     Args:
+    ----
       box_a: (tensor) bounding boxes, Shape: [A,4].
       box_b: (tensor) bounding boxes, Shape: [B,4].
+
     Return:
+    ------
       (tensor) intersection area, Shape: [A,B].
     """
     A = box_a.size(0)
@@ -53,10 +63,14 @@ def jaccard(box_a, box_b):
     ground truth boxes and default boxes.
     E.g.:
         A ∩ B / A ∪ B = A ∩ B / (area(A) + area(B) - A ∩ B)
+
     Args:
+    ----
         box_a: (tensor) Ground truth bounding boxes, Shape: [num_objects,4]
         box_b: (tensor) Prior boxes from priorbox layers, Shape: [num_priors,4]
+
     Return:
+    ------
         jaccard overlap: (tensor) Shape: [box_a.size(0), box_b.size(0)]
     """
     inter = intersect(box_a, box_b)
@@ -69,8 +83,7 @@ def jaccard(box_a, box_b):
 
 
 def matrix_iou(a, b):
-    """
-    return iou of a and b, numpy version for data augenmentation
+    """Return iou of a and b, numpy version for data augenmentation
     """
     lt = np.maximum(a[:, np.newaxis, :2], b[:, :2])
     rb = np.minimum(a[:, np.newaxis, 2:], b[:, 2:])
@@ -82,8 +95,7 @@ def matrix_iou(a, b):
 
 
 def matrix_iof(a, b):
-    """
-    return iof of a and b, numpy version for data augenmentation
+    """Return iof of a and b, numpy version for data augenmentation
     """
     lt = np.maximum(a[:, np.newaxis, :2], b[:, :2])
     rb = np.minimum(a[:, np.newaxis, 2:], b[:, 2:])
@@ -97,7 +109,9 @@ def match(threshold, truths, priors, variances, labels, landms, loc_t, conf_t, l
     """Match each prior box with the ground truth box of the highest jaccard
     overlap, encode the bounding boxes, then return the matched indices
     corresponding to both confidence and location preds.
+
     Args:
+    ----
         threshold: (float) The overlap threshold used when mathing boxes.
         truths: (tensor) Ground truth boxes, Shape: [num_obj, 4].
         priors: (tensor) Prior boxes from priorbox layers, Shape: [n_priors,4].
@@ -115,7 +129,7 @@ def match(threshold, truths, priors, variances, labels, landms, loc_t, conf_t, l
     # jaccard index
     overlaps = jaccard(
         truths,
-        point_form(priors)
+        point_form(priors),
     )
     # (Bipartite Matching)
     # [1,num_objects] best prior for each ground truth
@@ -156,7 +170,9 @@ def match(threshold, truths, priors, variances, labels, landms, loc_t, conf_t, l
 def encode(matched, priors, variances):
     """Encode the variances from the priorbox layers into the ground truth boxes
     we have matched (based on jaccard overlap) with the prior boxes.
+
     Args:
+    ----
         matched: (tensor) Coords of ground truth for each prior in point-form
             Shape: [num_priors, 4].
         priors: (tensor) Prior boxes in center-offset form
@@ -165,7 +181,6 @@ def encode(matched, priors, variances):
     Return:
         encoded boxes (tensor), Shape: [num_priors, 4]
     """
-
     # dist b/t match center and prior's center
     g_cxcy = (matched[:, :2] + matched[:, 2:])/2 - priors[:, :2]
     # encode variance
@@ -179,7 +194,9 @@ def encode(matched, priors, variances):
 def encode_landm(matched, priors, variances):
     """Encode the variances from the priorbox layers into the ground truth boxes
     we have matched (based on jaccard overlap) with the prior boxes.
+
     Args:
+    ----
         matched: (tensor) Coords of ground truth for each prior in point-form
             Shape: [num_priors, 10].
         priors: (tensor) Prior boxes in center-offset form
@@ -188,7 +205,6 @@ def encode_landm(matched, priors, variances):
     Return:
         encoded landm (tensor), Shape: [num_priors, 10]
     """
-
     # dist b/t match center and prior's center
     matched = torch.reshape(matched, (matched.size(0), 5, 2))
     priors_cx = priors[:, 0].unsqueeze(1).expand(matched.size(0), 5).unsqueeze(2)
@@ -209,7 +225,9 @@ def encode_landm(matched, priors, variances):
 def decode(loc, priors, variances):
     """Decode locations from predictions using priors to undo
     the encoding we did for offset regression at train time.
+
     Args:
+    ----
         loc (tensor): location predictions for loc layers,
             Shape: [num_priors,4]
         priors (tensor): Prior boxes in center-offset form.
@@ -218,7 +236,6 @@ def decode(loc, priors, variances):
     Return:
         decoded bounding box predictions
     """
-
     boxes = torch.cat((
         priors[:, :2] + loc[:, :2] * variances[0] * priors[:, 2:],
         priors[:, 2:] * torch.exp(loc[:, 2:] * variances[1])), 1)
@@ -229,7 +246,9 @@ def decode(loc, priors, variances):
 def decode_landm(pre, priors, variances):
     """Decode landm from predictions using priors to undo
     the encoding we did for offset regression at train time.
+
     Args:
+    ----
         pre (tensor): landm predictions for loc layers,
             Shape: [num_priors,10]
         priors (tensor): Prior boxes in center-offset form.
@@ -251,7 +270,9 @@ def log_sum_exp(x):
     """Utility function for computing log_sum_exp while determining
     This will be used to determine unaveraged confidence loss across
     all examples in a batch.
+
     Args:
+    ----
         x (Variable(tensor)): conf_preds from conf layers
     """
     x_max = x.data.max()
@@ -264,15 +285,18 @@ def log_sum_exp(x):
 def nms(boxes, scores, overlap=0.5, top_k=200):
     """Apply non-maximum suppression at test time to avoid detecting too many
     overlapping bounding boxes for a given object.
+
     Args:
+    ----
         boxes: (tensor) The location preds for the img, Shape: [num_priors,4].
         scores: (tensor) The class predscores for the img, Shape:[num_priors].
         overlap: (float) The overlap thresh for suppressing unnecessary boxes.
         top_k: (int) The Maximum number of box preds to consider.
+
     Return:
+    ------
         The indices of the kept boxes with respect to num_priors.
     """
-
     keep = torch.Tensor(scores.size(0)).fill_(0).long()
     if boxes.numel() == 0:
         return keep

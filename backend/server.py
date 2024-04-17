@@ -1,24 +1,22 @@
 """setup server"""
 
-from pathlib import Path
-import json
-import time
 import datetime as dt
+import json
 import logging
+import time
+from pathlib import Path
 
-import ray
-from ray import serve
-import requests
+import backend.face_combiner as fc
+import backend.face_detector as fd
 
 # from starlette.requests import Request
 # from starlette.middleware import Middleware
 # from starlette.middleware.cors import CORSMiddleware
-
 import backend.image_uploader as iul
-import backend.face_detector as fd
 import backend.landmarks_detector as lmd
-import backend.face_combiner as fc
-
+import ray
+import requests
+from ray import serve
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)

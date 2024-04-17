@@ -1,12 +1,14 @@
 
 import numpy as np
-from .common import TMP_IMAGES_PATH, l_info, get_image, Request
+from backend import fld
+
+from .common import Request, get_image
 from .retinaface.core import Retinaface
-import backend.fld as fld
 
 
 class LandMarksDetector:
     """detect all faces in an image"""
+
     def __init__(self):
         print( "Landmarks detector building retinaface model" )
         self.imgs_cache = {}

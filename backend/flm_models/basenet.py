@@ -1,9 +1,8 @@
 # Backbone networks used for face landmark detection
 # Cunjian Chen (cunjian@msu.edu)
 
-import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.models as models
+from torch import nn
+from torchvision import models
 
 
 class ConvBlock(nn.Module):
@@ -25,12 +24,13 @@ class ConvBlock(nn.Module):
             return x
         else:
             return self.prelu(x)
-            
+
 
 # SE module
 # https://github.com/wujiyang/Face_Pytorch/blob/master/backbone/cbam.py
 class SEModule(nn.Module):
-    '''Squeeze and Excitation Module'''
+    """Squeeze and Excitation Module"""
+
     def __init__(self, channels, reduction):
         super(SEModule, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -51,7 +51,7 @@ class SEModule(nn.Module):
 
         return input * x
 
-        
+
 # USE global depthwise convolution layer. Compatible with MobileNetV2 (224×224),
 # MobileNetV2_ExternalData (224×224)
 class MobileNet_GDConv(nn.Module):
@@ -84,18 +84,19 @@ class MobileNet_GDConv_56(nn.Module):
         x = self.linear7(x)
         x = self.linear1(x)
         x = x.view(x.size(0), -1)
-        return x        
+        return x
 
 
 class MobileNet_GDConv_SE(nn.Module):
     """MobileNetV2 with SE; Compatible with MobileNetV2_SE (224×224)
-    and MobileNetV2_SE_RE (224×224)"""
+    and MobileNetV2_SE_RE (224×224)
+    """
 
     def __init__(self, num_classes):
         super(MobileNet_GDConv_SE, self).__init__()
         self.pretrain_net = models.mobilenet_v2(pretrained=True)
         self.base_net = nn.Sequential(*list(self.pretrain_net.children())[:-1])
-        self.linear7 = ConvBlock(1280, 1280, (7, 7), 1, 0, dw=True, linear=True) 
+        self.linear7 = ConvBlock(1280, 1280, (7, 7), 1, 0, dw=True, linear=True)
         self.linear1 = ConvBlock(1280, num_classes, 1, 1, 0, linear=True)
         self.attention = SEModule(1280, 8)
 
@@ -105,4 +106,4 @@ class MobileNet_GDConv_SE(nn.Module):
         x = self.linear7(x)
         x = self.linear1(x)
         x = x.view(x.size(0), -1)
-        return x       
+        return x

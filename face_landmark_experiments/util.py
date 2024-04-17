@@ -3,6 +3,7 @@ import numpy as np
 
 class BBox:
     """a bounding box and projections"""
+
     # bbox is a list of [left, right, top, bottom]
     def __init__(self, bbox):
         self.left = bbox[0]

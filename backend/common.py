@@ -1,11 +1,8 @@
 """definitions common to many moduless"""
 
 import logging
-from pathlib import Path
 from hashlib import sha256
-
-from starlette.requests import Request
-from starlette.responses import FileResponse
+from pathlib import Path
 
 import numpy as np
 import PIL.Image
@@ -32,7 +29,7 @@ def _setup_logging():
 
 
 def get_image( img_key: str ) -> Array:
-    """get previously uploaded image by key"""
+    """Get previously uploaded image by key"""
     fpath = TMP_IMAGES_PATH / img_key
     img_raw = PIL.Image.open( fpath )
     img = np.asarray( img_raw )
@@ -42,7 +39,7 @@ def get_image( img_key: str ) -> Array:
 
 
 def put_img( img: PIL.Image, prefix: str = "out" ) -> str:
-    """put image and return key"""
+    """Put image and return key"""
     img_key = prefix + "_" + sha256( np.asarray(img).tobytes() ).hexdigest()[:24] + ".png"
     fpath = TMP_IMAGES_PATH / img_key
     img.save( fpath )

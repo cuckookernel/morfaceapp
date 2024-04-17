@@ -2,11 +2,11 @@
 
 from hashlib import sha256
 
-from .common import Request, TMP_IMAGES_PATH, FileResponse
+from .common import TMP_IMAGES_PATH, FileResponse, Request
 
 
 async def upload_image( request: Request ):
-    """upload image via post request"""
+    """Upload image via post request"""
     print( f"upload_image: headers={request.headers}" )
     content_length = int(request.headers['Content-Length'])
     if content_length > 1024 ** 2:
@@ -30,8 +30,7 @@ async def upload_image( request: Request ):
 
 
 async def download_image( request: Request ) -> FileResponse:
-    """upload image via post request"""
-
+    """Upload image via post request"""
     # image_bytes = await request.body()
     img_key = request.query_params['img_key']
     print( f"download_image: {img_key}" )

@@ -1,16 +1,16 @@
 """face combination"""
-from typing import List
 import time
-from pathlib import Path
 from dataclasses import dataclass
-import PIL
-from PIL import Image
-import PIL.Image
-import numpy as np
+from pathlib import Path
+from typing import List
 
-import backend.fld as fld
+import numpy as np
+import PIL
+import PIL.Image
+from backend import fld
 from backend.fld import TRIANGLES
 from face_landmark_experiments.util import BBox
+from PIL import Image
 
 Array = np.ndarray
 
@@ -18,6 +18,7 @@ Array = np.ndarray
 @dataclass
 class ProcessedImage:
     """An image for which landmarks have already been computeds"""
+
     img: Array  # shape: (h, w, c)
     bbox: BBox
     landmarks: Array
@@ -155,6 +156,7 @@ class ImageCombiner:
 
 class BariCalc2:
     """baricentric coordinates calculation"""
+
     def __init__(self, lm_c: Array, dim: int):
         self.lm_c = lm_c
         self.find_tri_cnt = 0
@@ -176,7 +178,7 @@ class BariCalc2:
         self.dy3 = np.tile(p3[:, [1]] - p1[:, [1]], (1, dim))
 
     def coords_triangles(self, x: Array, y: Array) -> Array:
-        """baricentric coordinates for all triangles"""
+        """Baricentric coordinates for all triangles"""
         assert x.shape == (1, self.dim)
         assert y.shape == (1, self.dim)
         dx = np.tile(x, (self.num_tri, 1)) - self.x1

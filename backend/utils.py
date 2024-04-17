@@ -1,4 +1,3 @@
-# coding: utf-8
 
 from typing import Dict
 
@@ -7,7 +6,7 @@ import numpy as np
 
 Array = np.ndarray
 
-class BBox(object):
+class BBox:
     # bbox is a list of [left, right, top, bottom]
     def __init__(self, bbox):
         self.left = bbox[0]
@@ -41,14 +40,13 @@ class BBox(object):
 
 
 def drawLandmark(img, bbox, landmark):
-    '''
-    Input:
+    """Input:
     - img: gray or RGB
     - bbox: type of BBox
     - landmark: reproject landmark of (5L, 2L)
     Output:
     - img marked with landmark and bbox
-    '''
+    """
     img_ = img.copy()
     cv2.rectangle(img_, (bbox.left, bbox.top), (bbox.right, bbox.bottom), (0,0,255), 2)
     for x, y in landmark:
@@ -57,14 +55,13 @@ def drawLandmark(img, bbox, landmark):
 
 
 def drawLandmark_multiple(img, bbox, landmark):
-    '''
-    Input:
+    """Input:
     - img: gray or RGB
     - bbox: type of BBox
     - landmark: reproject landmark of (5L, 2L)
     Output:
     - img marked with landmark and bbox
-    '''
+    """
     cv2.rectangle(img, (bbox.left, bbox.top), (bbox.right, bbox.bottom), (0, 0, 255), 2)
     for x, y in landmark:
         cv2.circle(img, (int(x), int(y)), 2, (0, 255, 0), -1)
@@ -72,14 +69,13 @@ def drawLandmark_multiple(img, bbox, landmark):
 
 
 def drawLandmark_Attribute(img, bbox, landmark, gender, age):
-    '''
-    Input:
+    """Input:
     - img: gray or RGB
     - bbox: type of BBox
     - landmark: reproject landmark of (5L, 2L)
     Output:
     - img marked with landmark and bbox
-    '''
+    """
     cv2.rectangle(img, (bbox.left, bbox.top), (bbox.right, bbox.bottom), (0,0,255), 2)
     for x, y in landmark:
         cv2.circle(img, (int(x), int(y)), 3, (0,255,0), -1)
@@ -100,14 +96,13 @@ def drawLandmark_Attribute(img, bbox, landmark, gender, age):
 
 
 def drawLandmark_only(img, landmark):
-    '''
-    Input:
+    """Input:
     - img: gray or RGB
     - bbox: type of BBox
     - landmark: reproject landmark of (5L, 2L)
     Output:
     - img marked with landmark and bbox
-    '''
+    """
     img_ = img.copy()
     #cv2.rectangle(img_, (bbox.left, bbox.top), (bbox.right, bbox.bottom), (0,0,255), 2)
     for x, y in landmark:
@@ -116,9 +111,8 @@ def drawLandmark_only(img, landmark):
 
 
 def processImage(imgs):
-    '''
-    Subtract mean and normalize, imgs [N, 1, W, H]
-    '''
+    """Subtract mean and normalize, imgs [N, 1, W, H]
+    """
     imgs = imgs.astype(np.float32)
     for i, img in enumerate(imgs):
         m = img.mean()
@@ -128,9 +122,8 @@ def processImage(imgs):
 
 
 def flip(face, landmark):
-    '''
-    flip a face and its landmark
-    '''
+    """Flip a face and its landmark
+    """
     face_ = cv2.flip(face, 1) # 1 means flip horizontal
     landmark_flip = np.asarray(np.zeros(landmark.shape))
     for i, point in enumerate(landmark):
@@ -160,9 +153,8 @@ def flip(face, landmark):
 
 
 def check_bbox(img, bbox):
-    '''
-    Check whether bbox is out of the range of the image
-    '''
+    """Check whether bbox is out of the range of the image
+    """
     img_w, img_h = img.shape
     if bbox.x > 0 and bbox.y > 0 and bbox.right < img_w and bbox.bottom < img_h:
         return True
@@ -171,9 +163,8 @@ def check_bbox(img, bbox):
 
 
 def rotate(img, bbox, landmark, alpha):
-    """
-        given a face with bbox and landmark, rotate with alpha
-        and return rotated face with bbox, landmark (absolute position)
+    """Given a face with bbox and landmark, rotate with alpha
+    and return rotated face with bbox, landmark (absolute position)
     """
     center = ((bbox.left+bbox.right)/2, (bbox.top+bbox.bottom)/2)
     rot_mat = cv2.getRotationMatrix2D(center, alpha, 1)

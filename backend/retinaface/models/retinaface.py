@@ -1,11 +1,9 @@
 import torch
-import torch.nn as nn
-import torchvision.models._utils as _utils
 import torch.nn.functional as F
+from torch import nn
+from torchvision.models import _utils
 
-from .net import MobileNetV1
-from .net import FPN
-from .net import SSH
+from .net import FPN, SSH, MobileNetV1
 
 
 class ClassHead(nn.Module):
@@ -18,7 +16,7 @@ class ClassHead(nn.Module):
     def forward(self, x):
         out = self.conv1x1(x)
         out = out.permute(0, 2, 3, 1).contiguous()
-        
+
         return out.view(out.shape[0], -1, 2)
 
 
@@ -50,8 +48,7 @@ class LandmarkHead(nn.Module):
 
 class RetinaFace(nn.Module):
     def __init__(self, cfg=None, phase='train'):
-        """
-        :param cfg:  Network related settings.
+        """:param cfg:  Network related settings.
         :param phase: train or test.
         """
         super(RetinaFace, self).__init__()
@@ -70,7 +67,7 @@ class RetinaFace(nn.Module):
                 # load params
                 backbone.load_state_dict(new_state_dict)
         elif cfg['name'] == 'Resnet50':
-            import torchvision.models as models
+            from torchvision import models
             backbone = models.resnet50(pretrained=cfg['pretrain'])
 
         self.body = _utils.IntermediateLayerGetter(backbone, cfg['return_layers'])
@@ -95,7 +92,7 @@ class RetinaFace(nn.Module):
         for i in range(fpn_num):
             classhead.append(ClassHead(inchannels, anchor_num))
         return classhead
-    
+
     def _make_bbox_head(self, fpn_num=3, inchannels=64, anchor_num=2):
         bboxhead = nn.ModuleList()
         for i in range(fpn_num):

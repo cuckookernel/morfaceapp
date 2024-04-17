@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:developer';
+import 'package:image_picker/image_picker.dart';
+
 
 import 'dart:io' as io;
 import 'dart:convert' as cv;
@@ -94,8 +96,8 @@ class MyHomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
-                  PictureSelectorCard2("A"),
-                  PictureSelectorCard2("B")
+                  PictureSelectorCard("A"),
+                  PictureSelectorCard("B")
                 ],
               )
             //),
@@ -116,7 +118,7 @@ class MyHomePage extends StatelessWidget {
                         // onPressed: appStateModel.getFaceCombinationResult
                         onPressed: () {
                           appStateModel.getFaceCombinationResult();
-                          
+
                           Navigator.push(context,
                               MaterialPageRoute(
                                   builder: (context) => CombImagePage()
@@ -132,71 +134,60 @@ class MyHomePage extends StatelessWidget {
 }
 
 class AppStateModel extends ChangeNotifier {
-  ImageState imageStateA = ImageState();
-  ImageState imageStateB = ImageState();
+  Map<String, ImageState> imageStates = {"A": ImageState(), "B": ImageState()};
   Image combImage;
   double _combinationProgress = 0.0;
   get combinationProgress => _combinationProgress;
 
-  void setImageFileA(io.File imageFile) {
-    log("setImageFileA called $imageFile");
-    if(imageFile != imageStateA.file) {
-      imageStateA.reset();
-      imageStateA.file = imageFile;
-      // notifyListeners();
-    }
+  void setFutureImage(String imageLabel, Future<PickedFile> pickedImageFile) {
+    log("setFutureImageFile called $imageLabel");
+
+    imageStates[imageLabel].reset();
+    imageStates[imageLabel].futureImageFile = pickedImageFile;
+    notifyListeners();
   }
 
-  void setImageFileB(io.File imageFile) {
-    log("setImageFileB called $imageFile");
-    if(imageFile != imageStateB.file) {
-      imageStateB.reset();
-      imageStateB.file = imageFile;
-      // notifyListeners();
-    }
+  void setImageFile(String imageLabel, io.File imageFile) {
+    log("setImageFile called $imageLabel $imageFile");
+    imageStates[imageLabel].file = imageFile;
+    notifyListeners();
   }
 
   void getFaceCombinationResult() async {
     _combinationProgress = 0;
     // notifyListeners();
-    if( imageStateA.key == null ) {
-      imageStateA.key = await uploadImageAsync(imageStateA.file);
-      log("A.key: ${imageStateA.key}");
+
+    for( String label in ['A', 'B'] ) {
+      if( imageStates[label].key == null ) {
+        imageStates[label].key = await uploadImageAsync(imageStates[label].file);
+        log("$label.key: ${imageStates[label].key}");
+      }
+
+      _combinationProgress = 0.1;
+      notifyListeners();
+
+      if (imageStates[label].faceIdx == null) {
+        log("Before calling detectFaces $label: ${imageStates[label].key}");
+
+        await detectFacesAsync(imageStates[label].key);
+        imageStates[label].faceIdx = 0;
+      }
+      _combinationProgress = 0.2;
+
+      notifyListeners();
+      // TODO: check that numFaces for each of the two images is not 0.
+      // If numFaces == 0, should tell user no faces detected on image and stop
+      // If numFaces > 1  need to ask user which face to use
+
+      imageStates[label].landmarks = await imageStates[label].detectLandmarksAsync();
+
+
     }
-    if( imageStateB.key == null ) {
-      imageStateB.key = await uploadImageAsync(imageStateB.file);
-      log("B.key: ${imageStateB.key}");
-    }
-    _combinationProgress = 0.1;
-    // notifyListeners();
-
-    if( imageStateA.faceIdx == null ){
-      log("Before calling detectFaces A: ${imageStateA.key}");
-
-      //final numFacesA =
-      await detectFacesAsync(imageStateA.key);
-      imageStateA.faceIdx = 0;
-    }
-    if( imageStateB.faceIdx == null  ) {
-      log("Before calling detectFaces B: ${imageStateB.key}");
-
-      // final numFacesB =
-      await detectFacesAsync(imageStateB.key);
-      imageStateB.faceIdx = 0;
-    }
-
-    _combinationProgress = 0.2;
-    // notifyListeners();
-    // TODO: check that numFaces for each of the two images is not 0.
-    // If numFaces == 0, should tell user no faces detected on image and stop
-    // If numFaces > 1  need to ask user which face to use
-
-    imageStateA.landmarks = await imageStateA.detectLandmarksAsync();
-    imageStateB.landmarks = await imageStateB.detectLandmarksAsync();
 
     combImage = await combineFacesAsync(0.5);
-    _combinationProgress = 0.8;
-    // notifyListeners();
+    _combinationProgress = 0.9;
+    notifyListeners();
+
   }
 
 
@@ -218,15 +209,15 @@ class AppStateModel extends ChangeNotifier {
   }
 
   Future<Image> combineFacesAsync(double lambda ) async {
-    log("calling /combine_faces ${imageStateA.key} ${imageStateB.key}");
+    log("calling /combine_faces ${imageStates['A'].key} ${imageStates['B'].key}");
 
     final dataObj = {
-      "img1_key": imageStateA.key,
-      "landmarks1": imageStateA.landmarks.points,
-      "face_bbox1": imageStateA.landmarks.bbox,
-      "img2_key": imageStateB.key,
-      "landmarks2": imageStateB.landmarks.points,
-      "face_bbox2": imageStateB.landmarks.bbox,
+      "img1_key": imageStates['A'].key,
+      "landmarks1": imageStates['A'].landmarks.points,
+      "face_bbox1": imageStates['A'].landmarks.bbox,
+      "img2_key": imageStates['B'].key,
+      "landmarks2": imageStates['B'].landmarks.points,
+      "face_bbox2": imageStates['B'].landmarks.bbox,
       "lambd":  lambda,
     };
 
@@ -258,6 +249,7 @@ class AppStateModel extends ChangeNotifier {
 }
 
 class ImageState {
+  Future<PickedFile> futureImageFile;
   io.File file;
   String key;
   int faceIdx;

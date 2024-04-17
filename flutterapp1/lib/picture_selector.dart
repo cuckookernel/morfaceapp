@@ -5,66 +5,55 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'main.dart';
 
-class PictureSelectorCard2 extends StatefulWidget {
+class PictureSelectorCard extends StatelessWidget {
   final String imgLabel;
-  PictureSelectorCard2(this.imgLabel) : super();
-  @override
-  _PictureSelectorState createState() => _PictureSelectorState(this.imgLabel);
-}
+  final ImagePicker imgPicker = ImagePicker();
 
-class _PictureSelectorState extends State<PictureSelectorCard2> {
-  final String imgLabel;
-  Future<PickedFile> imageFile;
-  ImagePicker imgPicker = ImagePicker();
+  PictureSelectorCard(this.imgLabel) : super();
 
-  _PictureSelectorState(this.imgLabel);
-
-  pickImageFromGallery(ImageSource source) {
-    setState(() {
-      imageFile = imgPicker.getImage(source: source);
-    });
+  pickImageFromGallery(AppStateModel appStateModel, ImageSource source) {
+    appStateModel.setFutureImage(imgLabel, imgPicker.getImage(source: source));
   }
 
   @override
-  Widget build(BuildContext context) =>
-      Row( children:  <Widget>[
-              Expanded(
-                  child: showImage()
-              ),
-              //showImage(),
-              Column(
-                  children: [
-                    IconButton(
-                        icon: Icon( Icons.camera, color: Colors.blue ),
-                        onPressed: () {
-                          pickImageFromGallery(ImageSource.camera);
-                        }
-                    ),
-                    IconButton(
-                        icon: Icon( Icons.add_a_photo, color: Colors.blue ),
-                        onPressed: () {
-                          pickImageFromGallery(ImageSource.gallery);
-                        })
-                  ]
-              )
-            ]
-      );
+  Widget build(BuildContext context) {
+    var appStateModel = Provider.of<AppStateModel>(context);
 
-  Widget showImage() {
+    return Row(
+        children:  <Widget>[
+          Expanded(
+              child: showImage(appStateModel)
+          ),
+          //showImage(),
+          Column(
+              children: [
+                IconButton(
+                    icon: Icon( Icons.camera, color: Colors.blue ),
+                    onPressed: () {
+                      pickImageFromGallery(appStateModel, ImageSource.camera);
+                    }
+                ),
+                IconButton(
+                    icon: Icon( Icons.add_a_photo, color: Colors.blue ),
+                    onPressed: () {
+                      pickImageFromGallery(appStateModel, ImageSource.gallery);
+                    })
+              ]
+          )
+        ]
+    );
+  }
+
+  Widget showImage(AppStateModel appStateModel) {
+
     return FutureBuilder<PickedFile>(
-      future: imageFile,
+      future: appStateModel.imageStates['A'].futureImageFile,
       builder: (BuildContext context, AsyncSnapshot<PickedFile> snapshot) {
         if (snapshot.connectionState == ConnectionState.done &&
             snapshot.data != null) {
 
           var imageFile = File(snapshot.data.path);
-          var model = Provider.of<AppStateModel>(context);
-
-          if( imgLabel == "A" ) {
-            model.setImageFileA(imageFile);
-          } else if( imgLabel == "B") {
-            model.setImageFileB(imageFile);
-          }
+          appStateModel.setImageFile(imgLabel, imageFile);
 
           return Image.file( imageFile, width: 200, height: 200);
         } else if (snapshot.error != null) {
@@ -82,26 +71,3 @@ class _PictureSelectorState extends State<PictureSelectorCard2> {
     );
   }
 }
-
-
-/*
-class PictureSelectorCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) =>
-      Row( children:
-        <Widget>[
-          Expanded(
-              child: Image.asset( 'images/no_pic.png')
-          ),
-          Column(
-              children: [
-                IconButton(
-                  icon: Icon( Icons.camera, color: Colors.blue ) ),
-                IconButton(
-                  icon: Icon( Icons.add_a_photo, color: Colors.blue ) )
-              ]
-          )
-        ]
-      );
-}
-*/

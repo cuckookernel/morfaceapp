@@ -1,16 +1,14 @@
-"""faces detection in a picture via mobilenet v0.25 model """
-from __future__ import print_function
-import torch
-import torch.backends.cudnn as cudnn
-import numpy as np
-from .data import cfg_mnet, cfg_re50
-from .layers.functions.prior_box import PriorBox
-from .utils.nms.py_cpu_nms import py_cpu_nms
-import cv2
-from .models.retinaface import RetinaFace
-from .utils.box_utils import decode, decode_landm
+"""faces detection in a picture via mobilenet v0.25 model"""
 import time
 
+import numpy as np
+import torch
+
+from .data import cfg_mnet
+from .layers.functions.prior_box import PriorBox
+from .models.retinaface import RetinaFace
+from .utils.box_utils import decode, decode_landm
+from .utils.nms.py_cpu_nms import py_cpu_nms
 
 # some global configs
 trained_model = 'backend/retinaface/weights/mobilenet0.25_Final.pth'
@@ -38,14 +36,14 @@ def check_keys(model, pretrained_state_dict):
 
 
 def remove_prefix(state_dict, prefix):
-    ''' Old style model is stored with all names of parameters sharing common prefix 'module.' '''
+    """Old style model is stored with all names of parameters sharing common prefix 'module.'"""
     # print('remove prefix \'{}\''.format(prefix))
     fun = lambda x: x.split(prefix, 1)[-1] if x.startswith(prefix) else x
     return {fun(key): value for key, value in state_dict.items()}
 
 
 def load_model(model, pretrained_path, load_to_cpu):
-    print('Loading pretrained model from {}'.format(pretrained_path))
+    print(f'Loading pretrained model from {pretrained_path}')
     if load_to_cpu:
         pretrained_dict = torch.load(pretrained_path, map_location=lambda storage, loc: storage)
     else:
@@ -63,13 +61,13 @@ def load_model(model, pretrained_path, load_to_cpu):
 class Retinaface:
     def __init__(self, timer_flag=False):
         torch.set_grad_enabled(False)
-        '''
+        """
         if network == "mobile0.25":
             cfg = cfg_mnet
         elif network == "resnet50":
             cfg = cfg_re50
-        '''
-        self.cfg = cfg_mnet    
+        """
+        self.cfg = cfg_mnet
         # net and model
         net = RetinaFace(cfg=self.cfg, phase='test')
         self.net = load_model(net, trained_model, cpu)
@@ -98,7 +96,7 @@ class Retinaface:
 
         tic = time.time()
         loc, conf, landms = self.net(img)  # forward pass
-        print('net forward time: {:.4f}'.format(time.time() - tic))
+        print(f'net forward time: {time.time() - tic:.4f}')
 
         priorbox = PriorBox(self.cfg, image_size=(im_height, im_width))
         priors = priorbox.forward()
@@ -140,7 +138,7 @@ class Retinaface:
         # landms = landms[:args.keep_top_k, :]
 
         # dets = np.concatenate((dets, landms), axis=1)
-        
+
         if self.timer_flag:
             print('Detection: {:d}/{:d} forward_pass_time: {:.4f}s misc: {:.4f}s'.format(1, 1, _t[
                 'forward_pass'].average_time, _t['misc'].average_time))

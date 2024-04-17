@@ -1,18 +1,18 @@
 """Helper functions to support face landmark detection using
-python_facelandmark_detection project"""
-from typing import List, Tuple, Dict
+python_facelandmark_detection project
+"""
 import time
 from pathlib import Path
+from typing import Dict, List, Tuple
 
+import cv2
 import numpy as np
 import torch
-import torch.nn as nn
-import cv2
+from torch import nn
 
 # from .retinaface.core import Retinaface
 from .flm_models.basenet import MobileNet_GDConv
 from .utils import BBox, drawLandmark_multiple
-
 
 PICS_PATH = Path( '/home/teo/Dokumente/Personales/Photos' )
 FLD_PATH = Path( '/home/teo/git/other_peoples/pytorch_face_landmark' )
@@ -50,7 +50,7 @@ def load_landmarks_model():
 
 
 def process_faces(faces: List[Array], img: np.ndarray, model: nn.Module) -> np.ndarray:
-    """detect all faces in an image and their landmarks and draw bounding boxes and points"""
+    """Detect all faces in an image and their landmarks and draw bounding boxes and points"""
     for k, face in enumerate(faces):
         landmark, new_bbox = process_1_face(face, img, model)
         img = drawLandmark_multiple(img, new_bbox, landmark)
@@ -71,7 +71,7 @@ def process_1_face(face_bbox: Array, img: np.ndarray, model: nn.Module ) -> Tupl
     cropped_face = cv2.resize(cropped, (OUT_SIZE, OUT_SIZE))
 
     if cropped_face.shape[0] <= 0 or cropped_face.shape[1] <= 0:
-        return
+        return None
 
     test_face = cropped_face.copy()
     test_face = test_face / 255.0
@@ -88,7 +88,7 @@ def process_1_face(face_bbox: Array, img: np.ndarray, model: nn.Module ) -> Tupl
     # else:
     landmark = model(nn_input).cpu().data.numpy()
     end = time.time()
-    print('Time: {:.6f}s.'.format(end - start))
+    print(f'Time: {end - start:.6f}s.')
 
     landmark = landmark.reshape(-1, 2)
     landmark = new_bbox.reprojectLandmark(landmark)

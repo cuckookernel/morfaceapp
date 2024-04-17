@@ -1,9 +1,9 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-from utils.box_utils import match, log_sum_exp
 from data import cfg_mnet
+from torch import nn
+from utils.box_utils import log_sum_exp, match
+
 GPU = cfg_mnet['gpu_train']
 
 class MultiBoxLoss(nn.Module):
@@ -21,7 +21,9 @@ class MultiBoxLoss(nn.Module):
         L(x,c,l,g) = (Lconf(x, c) + αLloc(x,l,g)) / N
         Where, Lconf is the CrossEntropy Loss and Lloc is the SmoothL1 Loss
         weighted by α which is set to 1 by cross val.
-        Args:
+
+    Args:
+    ----
             c: class confidences,
             l: predicted boxes,
             g: ground truth boxes
@@ -53,7 +55,6 @@ class MultiBoxLoss(nn.Module):
             ground_truth (tensor): Ground truth boxes and labels for a batch,
                 shape: [batch_size,num_objs,5] (last idx is the label).
         """
-
         loc_data, conf_data, landm_data = predictions
         priors = priors
         num = loc_data.size(0)

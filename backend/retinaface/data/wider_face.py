@@ -1,17 +1,16 @@
-import os
-import os.path
-import sys
-import torch
-import torch.utils.data as data
+
 import cv2
 import numpy as np
+import torch
+from torch.utils import data
+
 
 class WiderFaceDetection(data.Dataset):
     def __init__(self, txt_path, preproc=None):
         self.preproc = preproc
         self.imgs_path = []
         self.words = []
-        f = open(txt_path,'r')
+        f = open(txt_path)
         lines = f.readlines()
         isFirst = True
         labels = []
@@ -81,9 +80,11 @@ def detection_collate(batch):
     number of associated object annotations (bounding boxes).
 
     Arguments:
+    ---------
         batch: (tuple) A tuple of tensor images and lists of annotations
 
     Return:
+    ------
         A tuple containing:
             1) (tensor) batch of images stacked on their 0 dim
             2) (list of tensors) annotations for a given image are stacked on 0 dim

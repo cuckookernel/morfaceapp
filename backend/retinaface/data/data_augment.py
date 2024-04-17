@@ -1,6 +1,7 @@
+import random
+
 import cv2
 import numpy as np
-import random
 from utils.box_utils import matrix_iof
 
 
@@ -206,7 +207,7 @@ def _resize_subtract_mean(image, insize, rgb_mean):
     return image.transpose(2, 0, 1)
 
 
-class preproc(object):
+class preproc:
 
     def __init__(self, img_dim, rgb_means):
         self.img_dim = img_dim
