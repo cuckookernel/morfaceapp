@@ -1,0 +1,5 @@
+ray==1.13.0
+aiofiles==0.6.0
+opencv_python==4.9.0
+torch~=1.10
+torchvision~=0.12
