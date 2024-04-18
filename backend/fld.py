@@ -12,10 +12,10 @@ from torch import nn
 
 # from .retinaface.core import Retinaface
 from .flm_models.basenet import MobileNet_GDConv
-from .utils import BBox, drawLandmark_multiple
+from .utils import BBox, draw_landmarks_ip
 
 PICS_PATH = Path( '/home/teo/Dokumente/Personales/Photos' )
-FLD_PATH = Path( '/home/teo/git/other_peoples/pytorch_face_landmark' )
+# FLD_PATH = Path( '/home/teo/git/other_peoples/pytorch_face_landmark' )
 
 Array = np.ndarray
 
@@ -27,7 +27,7 @@ STD = np.asarray([ 0.229, 0.224, 0.225 ])
 
 # download model from
 # https://drive.google.com/file/d/1Le5UdpMkKOTRr1sTp4lwkw8263sbgdSe/view?usp=sharing
-MOBILE_NET_MODEL_FP = FLD_PATH / 'checkpoint/mobilenet_224_model_best_gdconv_external.pth.tar'
+MOBILE_NET_MODEL_FP = './models/mobilenet_224_model_best_gdconv_external.pth.tar'
 
 # %%
 
@@ -53,7 +53,7 @@ def process_faces(faces: List[Array], img: np.ndarray, model: nn.Module) -> np.n
     """Detect all faces in an image and their landmarks and draw bounding boxes and points"""
     for k, face in enumerate(faces):
         landmark, new_bbox = process_1_face(face, img, model)
-        img = drawLandmark_multiple(img, new_bbox, landmark)
+        img = draw_landmarks_ip(img, new_bbox, landmark)
 
     return img
 
@@ -88,7 +88,7 @@ def process_1_face(face_bbox: Array, img: np.ndarray, model: nn.Module ) -> Tupl
     # else:
     landmark = model(nn_input).cpu().data.numpy()
     end = time.time()
-    print(f'Time: {end - start:.6f}s.')
+    print(f'Landmark detection time: {end - start:.6f} s.')
 
     landmark = landmark.reshape(-1, 2)
     landmark = new_bbox.reprojectLandmark(landmark)
