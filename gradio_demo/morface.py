@@ -1,11 +1,11 @@
-import cv2
+from pathlib import Path
 import numpy as np
 import gradio as gr
 
 from backend import fld
 from backend.face_comb import ProcessedImage, combine
-from backend.gradio.functions import LM_DETECTOR, NpArray, RETINAFACE
-from backend.utils import BBox, Landmarks, draw_landmarks_ip, draw_triangles
+from gradio_demo.functions import LM_DETECTOR, NpArray, RETINAFACE
+from backend.utils import draw_triangles
 
 
 def detect_landmarks_v2(input_image: NpArray) -> tuple[ProcessedImage, NpArray, NpArray]:
@@ -29,17 +29,32 @@ def detect_landmarks_v2(input_image: NpArray) -> tuple[ProcessedImage, NpArray, 
 
 
 def save_movie(out_fpath: str,
-               proc_img1: ProcessedImage, proc_img2: ProcessedImage,
+               proc_img1: ProcessedImage,
+               proc_img2: ProcessedImage,
+               n_frames: int,
                progress=gr.Progress()) -> str:
 
     sequence = []
 
-    lambda_seq = np.concatenate([np.arange(0, 1.0, 0.04), np.arange(1.0, 0., -0.04)])
+    lambda_seq = 0.5 + 0.5 * np.sin(np.linspace(0, 2 * np.pi, n_frames)) ** 3
+
+    out_fpath = Path(out_fpath)
+    frames_dir = out_fpath.parent / out_fpath.stem / 'frames'
+    frames_dir.mkdir(parents=True, exist_ok=True)
+    for file in frames_dir.glob('*.*'):
+        file.unlink()
+
+    print(f"Saving individual frames to: {frames_dir}")
+
     for lambda_ in progress.tqdm(lambda_seq):
         img = combine(proc_img1, proc_img2, lambda_)
         sequence.append(img)
+        out_file = frames_dir / f"frame-{lambda_:1.3f}.png"
+        img.save(str(out_file), format='png')
 
-    sequence[0].save(out_fpath, save_all=True, append_images=sequence[1:])
+
+    print(f"Saving movie consisting of {len(sequence)} frames to: {out_fpath}")
+    sequence[0].save(str(out_fpath), save_all=True, append_images=sequence[1:])
 
     return f"Done!"
 
@@ -75,15 +90,19 @@ with gr.Blocks() as demo:
                    inputs=[proc_img1, proc_img2, lambda_],
                    outputs=combined_img)
 
+    cropped_img2.change(combine,
+                        inputs=[proc_img1, proc_img2, lambda_],
+                        outputs=combined_img)
     with gr.Row():
-        gr.Label('Save animation to file:')
-        out_fpath_input = gr.Text('./movie.webp')
+        # gr.Label('Save animation to file:', show_label=False, container=False)
+        n_frames_input = gr.Number(30, show_label=False, container=False)
+        out_fpath_input = gr.Textbox('./movie.webp', show_label=False, container=False)
         save_webp_btn = gr.Button('Save animation')
         save_notif = gr.Markdown()
 
         save_webp_btn.click(save_movie,
-                            inputs=[out_fpath_input, proc_img1, proc_img2],
-                            outputs=save_notif)
+                            inputs=[out_fpath_input, proc_img1, proc_img2, n_frames_input],)
+                            # outputs=save_notif)
 
 
 demo.launch()

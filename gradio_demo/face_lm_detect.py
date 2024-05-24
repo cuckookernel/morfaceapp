@@ -1,7 +1,7 @@
 
 import gradio as gr
 
-from backend.gradio.functions import detect_face, detect_landmarks
+from gradio_demo.functions import detect_face, detect_landmarks
 
 with gr.Blocks() as demo:
     face_bbox_var = gr.State()

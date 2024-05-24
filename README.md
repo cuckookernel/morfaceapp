@@ -22,17 +22,17 @@ source ./venv/py310-torch-fld/bin/activate.sh
 ### Just face detection
 
 ```
-python gradio/face_detect_v2.py
+python gradio_demo/face_detect_v2.py
 ```
 
 ### Face detection & Landmark detection
 
 ```
-python gradio/face_lm_detect.py
+python gradio_demo/face_lm_detect.py
 ```
 
 ### Landmark Detection on two face + morphing
 
 ```
-python gradio/morface.py
+python gradio_demo/morface.py
 ```
