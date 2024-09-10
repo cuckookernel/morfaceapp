@@ -2,6 +2,7 @@
 
 # where movies and frames are saved:
 movie/
+demo_pics/
 
 
 .idea/
